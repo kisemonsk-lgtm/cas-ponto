@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ponto Digital — CAS Construtora de Armazéns e Silos</title>
+<link rel="stylesheet" href="estilo.css">
+<script>
+  /* aplica o tema antes de pintar a página (evita piscar branco) */
+  (function () {
+    var t = localStorage.getItem("cas-tema");
+    if (!t) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "escuro" : "claro";
+    document.documentElement.setAttribute("data-tema", t);
+  })();
+</script>
+</head>
+<body>
+
+<!-- ================= TOPO ================= -->
+<header class="topo">
+  <div class="marca">
+    <img src="logo-cas.png" alt="CAS">
+    <div>
+      <h1>CAS — Controle de Ponto</h1>
+      <p>Construtora de Armazéns e Silos</p>
+    </div>
+  </div>
+  <div class="topo-acoes">
+    <span id="statusSalvo" class="status">salvo</span>
+    <button id="btnTema" class="btn ghost tema" type="button" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">🌙</button>
+    <button id="btnImprimir" class="btn ghost" type="button">🖨 Imprimir folha</button>
+    <button id="btnExportar" class="btn ghost" type="button">⬇ Exportar</button>
+    <button id="btnImportar" class="btn ghost" type="button">⬆ Importar</button>
+    <input type="file" id="fileImport" accept="application/json" hidden>
+  </div>
+</header>
+
+<!-- ================= FILTROS ================= -->
+<section class="filtros">
+  <div class="campo">
+    <label for="mes">Mês</label>
+    <select id="mes"></select>
+  </div>
+  <div class="campo">
+    <label for="ano">Ano</label>
+    <select id="ano"></select>
+  </div>
+  <div class="campo">
+    <label for="dia">Dia</label>
+    <select id="dia"></select>
+  </div>
+  <div class="campo">
+    <label for="ordem">Ordenar por</label>
+    <select id="ordem">
+      <option value="cadastro">Nº de cadastro</option>
+      <option value="nome">Nome (A–Z)</option>
+      <option value="funcao">Função (A–Z)</option>
+      <option value="setor">Setor / grupo</option>
+    </select>
+  </div>
+  <div class="campo">
+    <label for="cfgJornada">Jornada diária</label>
+    <select id="cfgJornada">
+      <option value="7">7h por dia</option>
+      <option value="7.33">7h20 por dia</option>
+      <option value="8">8h por dia</option>
+      <option value="6">6h por dia</option>
+    </select>
+  </div>
+  <div class="campo grow">
+    <label for="busca">Buscar funcionário</label>
+    <input id="busca" type="search" placeholder="nome ou função…">
+  </div>
+  <div class="campo">
+    <label for="filtroFuncao">Função</label>
+    <select id="filtroFuncao"><option value="">Todas</option></select>
+  </div>
+  <div class="campo">
+    <label for="filtroSel">Selecionados</label>
+    <select id="filtroSel">
+      <option value="todos">Todos</option>
+      <option value="sel">Somente selecionados</option>
+      <option value="nosel">Somente não selecionados</option>
+    </select>
+  </div>
+  <div class="botoes">
+    <button id="btnMarcarTodos" class="btn" type="button">Marcar todos</button>
+    <button id="btnLimparSel" class="btn ghost" type="button">Limpar seleção</button>
+  </div>
+</section>
+
+<!-- ================= RESUMO ================= -->
+<section class="resumo">
+  <div class="card"><span class="rot">Data selecionada</span><strong id="rData">—</strong></div>
+  <div class="card"><span class="rot">Funcionários na lista</span><strong id="rTotal">0</strong></div>
+  <div class="card"><span class="rot">Selecionados</span><strong id="rSel">0</strong></div>
+  <div class="card"><span class="rot">Presentes hoje</span><strong id="rPres">0</strong></div>
+  <div class="card"><span class="rot">Atrasos / Faltas</span><strong id="rFalta">0</strong></div>
+  <div class="card"><span class="rot">Horas do dia</span><strong id="rHoras">0:00</strong></div>
+</section>
+
+<!-- ================= TABS ================= -->
+<nav class="tabs">
+  <button class="tab ativo" data-tab="dia" type="button">Ponto do dia</button>
+  <button class="tab" data-tab="mes" type="button">Folha do mês</button>
+  <button class="tab" data-tab="individual" type="button">Folha individual</button>
+  <button class="tab" data-tab="extra" type="button">Horas extras</button>
+  <button class="tab" data-tab="cadastro" type="button">Funcionários</button>
+</nav>
+
+<!-- ================= ABA: PONTO DO DIA ================= -->
+<main id="tab-dia" class="painel">
+  <div class="painel-cab">
+    <h2 id="tituloDia">Ponto do dia</h2>
+    <div class="legenda">
+      <span><b>F</b> falta</span><span><b>AT</b> atestado</span><span><b>FE</b> férias</span><span><b>FO</b> folga</span>
+      <span>Jornada de referência: <b>7h/dia</b> (07:30–12:00 / 13:30–16:30).</span>
+    </div>
+  </div>
+
+  <div class="tabela-wrap">
+    <table class="grade" id="tabelaDia">
+      <thead>
+        <tr>
+          <th class="c-sel"><input type="checkbox" id="selTodosDia" title="Marcar todos"></th>
+          <th class="c-num">Nº</th>
+          <th class="c-nome">Nome do Funcionário</th>
+          <th class="c-func">Função</th>
+          <th class="c-h">Entrada</th>
+          <th class="c-h">Saída Almoço</th>
+          <th class="c-h">Retorno</th>
+          <th class="c-h">Saída</th>
+          <th class="c-h">Extras</th>
+          <th class="c-h">Horas</th>
+          <th class="c-obs">Obs</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="acoes-fim">
+    <button id="btnTudoPresente" class="btn" type="button">Preencher entrada agora p/ selecionados</button>
+    <button id="btnLimparDia" class="btn ghost danger" type="button">Limpar registros do dia</button>
+  </div>
+</main>
+
+<!-- ================= ABA: FOLHA DO MÊS ================= -->
+<main id="tab-mes" class="painel oculto">
+  <div class="painel-cab">
+    <h2 id="tituloMes">Folha do mês</h2>
+    <div class="legenda">
+      <span id="diasInfo">—</span>
+      <span>Clique em um dia para abrir no lançamento.</span>
+    </div>
+  </div>
+  <div class="tabela-wrap folha-wrap">
+    <table class="grade folha" id="tabelaMes">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ================= ABA: FOLHA INDIVIDUAL ================= -->
+<main id="tab-individual" class="painel oculto">
+  <div class="painel-cab no-print">
+    <h2>Folha de ponto individual</h2>
+    <div class="legenda">
+      <span>Cada funcionário tem a sua própria folha do <b>dia 1 ao dia 30</b>, pronta para imprimir e assinar.</span>
+      <span>Marque os funcionários na aba <b>Ponto do dia</b> para gerar só as folhas deles.</span>
+    </div>
+  </div>
+
+  <div class="individual-topo no-print">
+    <div class="campo grow">
+      <label for="indFunc">Funcionário</label>
+      <select id="indFunc"></select>
+    </div>
+    <div class="campo">
+      <label>Folhas a gerar</label>
+      <div class="grupo-botoes">
+        <button id="btnIndSel" class="btn ghost ativo" type="button" title="Somente os funcionários marcados no Ponto do dia">Só os selecionados (<span id="qtdSel">0</span>)</button>
+        <button id="btnIndTodos" class="btn ghost" type="button" title="Todos os funcionários cadastrados">Todos</button>
+      </div>
+    </div>
+    <div class="campo">
+      <label>&nbsp;</label>
+      <button id="btnIndAnterior" class="btn ghost" type="button" title="Funcionário anterior">◀</button>
+    </div>
+    <div class="campo">
+      <label>&nbsp;</label>
+      <button id="btnIndProximo" class="btn ghost" type="button" title="Próximo funcionário">▶</button>
+    </div>
+    <div class="campo">
+      <label>&nbsp;</label>
+      <button id="btnIndImprimir" class="btn" type="button">🖨 Imprimir folha</button>
+    </div>
+  </div>
+
+  <div class="selecao-rapida no-print">
+    <div class="sr-cab">
+      <b>Marcar quem vai gerar folha</b>
+      <div class="sr-acoes">
+        <button id="srTodos" class="btn mini ghost" type="button">Marcar todos</button>
+        <button id="srNenhum" class="btn mini ghost" type="button">Desmarcar todos</button>
+        <button id="srFiltrados" class="btn mini ghost" type="button">Marcar filtrados</button>
+      </div>
+    </div>
+    <div id="srLista" class="sr-lista"></div>
+  </div>
+
+  <div id="folhasIndividuais" class="folhas"></div>
+</main>
+
+<!-- ================= ABA: HORAS EXTRAS ================= -->
+<main id="tab-extra" class="painel oculto">
+  <div class="painel-cab">
+    <h2 id="tituloExtra">Horas extras</h2>
+    <div class="legenda">
+      <span>Preencha a hora extra (ex.: <b>2:00</b> ou <b>1:30</b>) ou a saída real.</span>
+      <span>Fator: <b>50%</b> = 1,5× &nbsp;|&nbsp; <b>100%</b> = 2×</span>
+      <span>Total do mês = horas extras + adicional em R$.</span>
+    </div>
+  </div>
+
+  <div class="extra-topo">
+    <div class="campo"><label for="exValorHora">Valor da hora (R$)</label><input id="exValorHora" type="number" min="0" step="0.01" placeholder="0,00"></div>
+    <div class="campo"><label for="exDiasUteis">Dias úteis do mês</label><input id="exDiasUteis" type="number" min="0" max="31" step="1"></div>
+    <div class="campo"><label for="exFator">Fator padrão</label><select id="exFator"><option value="50">50%</option><option value="100">100%</option></select></div>
+    <div class="campo grow"><label for="exBusca">Buscar funcionário</label><input id="exBusca" type="search" placeholder="nome ou função…"></div>
+  </div>
+
+  <div class="tabela-wrap extra-wrap">
+    <table class="grade extra" id="tabelaExtra">
+      <thead>
+        <tr>
+          <th class="c-num">Nº</th>
+          <th class="c-nome">Funcionário</th>
+          <th class="c-func">Função</th>
+          <th class="c-he">Saída real</th>
+          <th class="c-he">Extra</th>
+          <th class="c-he">Fator</th>
+          <th class="c-he">Normal</th>
+          <th class="c-he">Extra 50%</th>
+          <th class="c-he">Extra 100%</th>
+          <th class="c-he">Valor R$</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot></tfoot>
+    </table>
+  </div>
+
+  <div class="acoes-fim">
+    <button id="btnExtraPadrao" class="btn ghost" type="button">Aplicar fator padrão em todos</button>
+    <button id="btnExtraLimpar" class="btn ghost danger" type="button">Limpar extras do dia</button>
+  </div>
+</main>
+
+<!-- ================= ABA: FUNCIONÁRIOS ================= -->
+<main id="tab-cadastro" class="painel oculto">
+  <div class="painel-cab">
+    <h2>Funcionários</h2>
+    <div class="legenda"><span>Nome, função e ativo. A numeração é automática.</span></div>
+  </div>
+  <form id="formFunc" class="form-func">
+    <input id="fNome" type="text" placeholder="Nome completo" required>
+    <input id="fFuncao" type="text" placeholder="Função" required>
+    <label class="chk"><input id="fAtivo" type="checkbox" checked> Ativo</label>
+    <button class="btn" type="submit" id="btnSalvarFunc">Adicionar</button>
+    <button class="btn ghost" type="button" id="btnCancelarEdit">Cancelar</button>
+  </form>
+  <div class="tabela-wrap">
+    <table class="grade" id="tabelaFunc">
+      <thead>
+        <tr><th class="c-num">Nº</th><th class="c-nome">Nome</th><th class="c-func">Função</th><th class="c-h">Ativo</th><th class="c-acoes">Ações</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+
+<footer class="rodape">
+  <span>CAS Construtora de Armazéns e Silos — sistema interno de controle de ponto</span>
+  <span>Dados salvos neste navegador (localStorage)</span>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script src="funcionarios.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
