@@ -35,6 +35,16 @@ os dados ficam salvos no próprio navegador (`localStorage`).
 | `funcionarios.js` | Lista inicial dos 38 funcionários (nome e função) |
 | `logo-cas.png` | Logo da empresa |
 
+## Usar no tablet ou celular
+
+O sistema é responsivo: funciona em computador, **tablet** (iPad ou Android) e celular.
+
+1. Abra o endereço publicado no navegador do tablet (Chrome, Safari ou Edge).
+2. Toque em **"Adicionar à tela de início"** (ou "Instalar aplicativo") para abrir como um app, em tela cheia.
+3. Os botões e campos têm tamanho de toque, e as tabelas rolam na horizontal sem quebrar.
+4. Depois do primeiro acesso ele funciona **sem internet** (service worker guarda os arquivos).
+5. Os dados ficam salvos no navegador do aparelho — para levar de um aparelho a outro, use **Exportar/Importar** (ou **Baixar/Carregar lista** para os funcionários).
+
 ## Observações
 
 - Os dados ficam **no navegador de cada computador**. Para levar de um para outro, use **Exportar** e depois **Importar**.
