@@ -151,10 +151,15 @@
     <div class="pb-linha">
       <div class="pb-grupo">
         <span class="pb-rot">Saída (a única que muda)</span>
-        <button id="btnSaida16" class="btn ghost" type="button" title="Marca a saída às 16:00 nos selecionados">🚶 Saída 16:00</button>
-        <button id="btnSaida18" class="btn ghost" type="button" title="Marca a saída às 18:00 nos selecionados">🚶 Saída 18:00</button>
-        <button id="btnSaidaCustom" class="btn ghost" type="button" title="Usa a hora digitada no campo ao lado">🕐 Outra hora:</button>
+        <button id="btnSaida16" class="btn ghost" type="button" title="Saída antecipada às 16:00">🚶 16:00</button>
+        <button id="btnSaidaPadrao" class="btn" type="button" title="Saída normal — preenche o horário padrão">🚶 Padrão <span id="lblSaidaPadrao">16:30</span></button>
+        <button id="btnSaida18" class="btn" type="button" title="Hora extra até as 18:00">⏰ Extra até 18:00</button>
+        <button id="btnSaidaCustom" class="btn ghost" type="button" title="Usa a hora digitada ao lado">🕐 Outra:</button>
         <input id="horaSaidaCustom" type="time" value="17:00" aria-label="Outra hora de saída">
+        <span class="pb-cfg" title="Configurar horários padrão">
+          <i>padrão</i><input id="cfgSaida" type="time" value="16:30">
+          <i>extra</i><input id="cfgExtra" type="time" value="18:00">
+        </span>
       </div>
       <div class="pb-grupo">
         <span class="pb-rot">Ocorrência</span>
