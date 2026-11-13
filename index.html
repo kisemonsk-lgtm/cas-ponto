@@ -114,8 +114,18 @@
     <h2 id="tituloDia">Ponto do dia</h2>
     <div class="legenda">
       <span><b>F</b> falta</span><span><b>AT</b> atestado</span><span><b>FE</b> férias</span><span><b>FO</b> folga</span>
-      <span>Jornada de referência: <b>7h/dia</b> (07:30–12:00 / 13:30–16:30).</span>
+      <span>Jornada de referência: <b>7h/dia</b> — entrada padrão <b>07:00</b> (12:00 / 13:00 / 16:30).</span>
     </div>
+  </div>
+
+  <div class="presenca-barra">
+    <div class="pb-campo">
+      <label for="horaPadrao">Entrada padrão</label>
+      <input id="horaPadrao" type="time" value="07:00">
+    </div>
+    <button id="btnRegistrarPresenca" class="btn" type="button">✅ Registrar ponto: marcar como veio</button>
+    <button id="btnFecharDia" class="btn ghost danger" type="button">❌ Não veio → falta</button>
+    <span class="pb-info" id="pbInfo">Selecione quem veio e clique em registrar.</span>
   </div>
 
   <div class="tabela-wrap">
@@ -140,7 +150,7 @@
   </div>
 
   <div class="acoes-fim">
-    <button id="btnTudoPresente" class="btn" type="button">Preencher entrada agora p/ selecionados</button>
+    <button id="btnTudoPresente" class="btn ghost" type="button">Preencher entrada agora p/ selecionados</button>
     <button id="btnLimparDia" class="btn ghost danger" type="button">Limpar registros do dia</button>
   </div>
 </main>
