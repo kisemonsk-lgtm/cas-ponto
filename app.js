@@ -39,7 +39,7 @@
         id: "f" + (i + 1), nome, funcao, ativo: true
       })),
       registros: {},
-      config: { horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "12:30" }
+      config: { horaEntrada: "07:00", horaSaida: "16:00", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:00", almocoPadrao: "11:30", retornoPadrao: "13:00" }
     });
   }
 
@@ -61,7 +61,7 @@
       ativo: f.ativo !== false
     }));
     d.registros = d.registros || {};
-    d.config = Object.assign({ horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "12:30" }, d.config || {});
+    d.config = Object.assign({ horaEntrada: "07:00", horaSaida: "16:00", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:00", almocoPadrao: "11:30", retornoPadrao: "13:00" }, d.config || {});
     return d;
   }
 
@@ -336,12 +336,14 @@
   function garantirConfigPresenca() {
     const c = estado.config;
     if (Number(c.cargaDiaria) === 7) c.cargaDiaria = 8;
+    if (c.saidaPadrao === "16:30") c.saidaPadrao = "16:00";
+    if (c.horaSaida === "16:30") c.horaSaida = "16:00";
     if (c.almocoPadrao === "12:00") c.almocoPadrao = "11:30";
-    if (c.retornoPadrao === "13:00") c.retornoPadrao = "12:30";
+    if (c.retornoPadrao === "12:30") c.retornoPadrao = "13:00";
     if (!c.horaPadrao) c.horaPadrao = "07:00";
     if (!c.almocoPadrao) c.almocoPadrao = "11:30";
-    if (!c.retornoPadrao) c.retornoPadrao = "12:30";
-    if (!c.saidaPadrao) c.saidaPadrao = "16:30";
+    if (!c.retornoPadrao) c.retornoPadrao = "13:00";
+    if (!c.saidaPadrao) c.saidaPadrao = "16:00";
   }
 
   /** marca como PRESENTE: entrada padrão (07:00) + horário normal de jornada */
