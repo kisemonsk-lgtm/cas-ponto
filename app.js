@@ -383,6 +383,28 @@
     }
   }
 
+  /** registra a saída de quem foi embora em um horário fixo (16:00, 18:00…) */
+  function marcarSaidaSelecionados(horaSaida) {
+    const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
+    const sel = idsSelecionados();
+    if (!sel.size) { toast("Marque primeiro os funcionários na lista (☑)."); return; }
+    const c = estado.config;
+    let n = 0;
+    estado.funcionarios.forEach((f) => {
+      if (!sel.has(f.id)) return;
+      const r = garantirReg(f.id, a, m, d);
+      r.marca = "";
+      r.e = r.e || horaPadrao();
+      r.sa = r.sa || c.almocoPadrao;
+      r.r = r.r || c.retornoPadrao;
+      r.s = horaSaida;
+      n++;
+    });
+    salvar(true);
+    renderDia(); renderResumo(); renderMes(); renderExtra(); renderIndividual();
+    toast(`Saída ${horaSaida} registrada para ${n} funcionário(s).`);
+  }
+
   /** marca ocorrência (F, AT, FE, FO, FZ) nos funcionários selecionados */
   function marcarOcorrenciaSelecionados(tipo) {
     const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
@@ -559,6 +581,8 @@
     toast(`${lista.length} falta(s) registrada(s).`);
   });
 
+  $("#btnSaida16").addEventListener("click", () => marcarSaidaSelecionados("16:00"));
+  $("#btnSaida18").addEventListener("click", () => marcarSaidaSelecionados("18:00"));
   $("#btnMarcarFolga").addEventListener("click", () => marcarOcorrenciaSelecionados("FO"));
   $("#btnMarcarFeriado").addEventListener("click", () => marcarOcorrenciaSelecionados("FZ"));
 
