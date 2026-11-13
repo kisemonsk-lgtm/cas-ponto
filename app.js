@@ -39,7 +39,7 @@
         id: "f" + (i + 1), nome, funcao, ativo: true
       })),
       registros: {},
-      config: { horaEntrada: "07:00", horaSaida: "16:00", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:00", almocoPadrao: "11:30", retornoPadrao: "13:00" }
+      config: { horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "13:00" }
     });
   }
 
@@ -61,7 +61,7 @@
       ativo: f.ativo !== false
     }));
     d.registros = d.registros || {};
-    d.config = Object.assign({ horaEntrada: "07:00", horaSaida: "16:00", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:00", almocoPadrao: "11:30", retornoPadrao: "13:00" }, d.config || {});
+    d.config = Object.assign({ horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "13:00" }, d.config || {});
     return d;
   }
 
@@ -339,26 +339,25 @@
   function garantirConfigPresenca() {
     const c = estado.config;
     if (Number(c.cargaDiaria) === 7) c.cargaDiaria = 8;
-    if (c.saidaPadrao === "16:30") c.saidaPadrao = "16:00";
-    if (c.horaSaida === "16:30") c.horaSaida = "16:00";
+    
+    
     if (c.almocoPadrao === "12:00") c.almocoPadrao = "11:30";
     if (c.retornoPadrao === "12:30") c.retornoPadrao = "13:00";
     if (!c.horaPadrao) c.horaPadrao = "07:00";
     if (!c.almocoPadrao) c.almocoPadrao = "11:30";
     if (!c.retornoPadrao) c.retornoPadrao = "13:00";
-    if (!c.saidaPadrao) c.saidaPadrao = "16:00";
+    if (!c.saidaPadrao) c.saidaPadrao = "16:30";
   }
 
-  /** marca como PRESENTE: entrada padrão (07:00) + horário normal de jornada */
+  /** marca como PRESENTE: horários fixos (entrada, almoço e retorno) — só a saída varia */
   function marcarPresente(fid, a, m, d, hora) {
     const r = garantirReg(fid, a, m, d);
     const c = estado.config;
-    r.e = hora || horaPadrao();
-    r.sa = r.sa || c.almocoPadrao;
-    r.r = r.r || c.retornoPadrao;
-    r.s = r.s || c.saidaPadrao;
+    r.e = hora || horaPadrao();        // 07:00
+    r.sa = c.almocoPadrao;             // 11:30
+    r.r = c.retornoPadrao;             // 13:00
+    r.s = r.s || c.saidaPadrao;        // saída (mantém se já existir)
     r.marca = "";
-    if (!r.obs) r.obs = "";
     return r;
   }
 
@@ -403,8 +402,12 @@
         return;
       }
       let n2 = 0;
+      const base = estado.config;
       comEntrada.forEach((f) => {
         const r = garantirReg(f.id, a, m, d);
+        r.e = r.e || base.horaPadrao || "07:00";
+        r.sa = r.sa || base.almocoPadrao || "11:30";
+        r.r = r.r || base.retornoPadrao || "13:00";
         r.s = horaSaida;
         n2++;
       });
@@ -418,11 +421,11 @@
     estado.funcionarios.forEach((f) => {
       if (!sel.has(f.id)) return;
       const r = garantirReg(f.id, a, m, d);
+      r.e = horaPadrao();                 // 07:00 (automático)
+      r.sa = c.almocoPadrao;              // 11:30 (automático)
+      r.r = c.retornoPadrao;              // 13:00 (automático)
+      r.s = horaSaida;                    // único horário que muda
       r.marca = "";
-      r.e = r.e || horaPadrao();
-      r.sa = r.sa || c.almocoPadrao;
-      r.r = r.r || c.retornoPadrao;
-      r.s = horaSaida;
       n++;
     });
     salvar(true);
@@ -538,6 +541,11 @@
     if (!campo) return;
     const r = garantirReg(id, a, m, d);
     r[campo] = ev.target.value;
+    if (campo === "s" && ev.target.value && !r.marca) {
+      r.e = r.e || horaPadrao();
+      r.sa = r.sa || estado.config.almocoPadrao;
+      r.r = r.r || estado.config.retornoPadrao;
+    }
     if (campo === "marca" && ev.target.value) { r.e = r.sa = r.r = r.s = ""; }
     if (campo === "marca" && ev.target.value === "FO" && !r.obs) r.obs = "folga";
     if (campo === "marca" && ev.target.value === "FZ" && !r.obs) r.obs = "feriado";
