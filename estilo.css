@@ -26,6 +26,7 @@
   --marca-at: #6d28d9; --marca-at-bg: #f1ecfe;
   --marca-fe: #0369a1; --marca-fe-bg: #eaf5fc;
   --marca-fo: #92400e; --marca-fo-bg: #fdf3e3;
+  --marca-fz: #7c2d12; --marca-fz-bg: #fdeee6;
   color-scheme: light;
 }
 
@@ -56,6 +57,7 @@ html[data-tema="escuro"] {
   --marca-at: #c4b5fd; --marca-at-bg: #2a2340;
   --marca-fe: #7dd3fc; --marca-fe-bg: #16323f;
   --marca-fo: #fcd34d; --marca-fo-bg: #3a2c14;
+  --marca-fz: #fdba74; --marca-fz-bg: #3d2417;
   color-scheme: dark;
 }
 html[data-tema="escuro"] .marca img {
@@ -179,6 +181,7 @@ table.grade { border-collapse: separate; border-spacing: 0; width: 100%; font-si
 .marca.at { color: var(--marca-at); background: var(--marca-at-bg); }
 .marca.fe { color: var(--marca-fe); background: var(--marca-fe-bg); }
 .marca.fo { color: var(--marca-fo); background: var(--marca-fo-bg); }
+.marca.fz { color: var(--marca-fz); background: var(--marca-fz-bg); }
 
 /* folha do mês */
 table.folha { font-size: 11.5px; }
@@ -194,6 +197,7 @@ table.folha tbody tr:hover td.nome { background: var(--hover); }
 .dia-cel.at { color: var(--marca-at); font-weight: 700; }
 .dia-cel.fe { color: var(--marca-fe); font-weight: 700; }
 .dia-cel.fo { color: var(--marca-fo); font-weight: 700; }
+.dia-cel.fz { color: var(--marca-fz); font-weight: 700; }
 .dia-cel.vazio { color: var(--vazio); }
 .dia-cel.domingo, .dia-cel.feriado { background: var(--zebra); }
 th.domingo { background: var(--zebra); color: var(--suave); }
@@ -294,6 +298,7 @@ table.fi-tabela td.falta { color: var(--erro); font-weight: 700; }
 table.fi-tabela td.at { color: var(--marca-at); font-weight: 700; }
 table.fi-tabela td.fe { color: var(--marca-fe); font-weight: 700; }
 table.fi-tabela td.fo { color: var(--marca-fo); font-weight: 700; }
+table.fi-tabela td.fz { color: var(--marca-fz); font-weight: 700; }
 table.fi-tabela tfoot td { background: var(--thead); font-weight: 700; }
 .fi-tot-rot { text-align: right !important; font-size: 8pt; letter-spacing: .5px; }
 .fi-resumo { display: flex; flex-wrap: wrap; gap: 2mm 5mm; margin-top: 2.5mm; padding: 1.6mm 2.4mm; border: 1px solid var(--linha); border-radius: 5px; align-items: center; font-size: 8.4pt; }
@@ -305,6 +310,11 @@ table.fi-tabela tfoot td { background: var(--thead); font-weight: 700; }
 .fi-ass { flex: 1; text-align: center; font-size: 7.6pt; color: var(--suave); }
 .fi-ass span { display: block; border-top: 1px solid var(--texto); margin-bottom: 1.2mm; height: 8mm; }
 .fi-rodape { display: none; }
+
+/* cadastro: barra de backup e tag novo */
+.barra-func { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.info-func { margin-right: auto; font-size: 12.5px; color: var(--suave); }
+.tag-novo { font-size: 9px; text-transform: uppercase; letter-spacing: .5px; padding: 1px 5px; border-radius: 4px; background: var(--ok); color: #fff; vertical-align: middle; }
 
 /* ---------- formulário ---------- */
 .form-func { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 12px; background: var(--thead); border: 1px solid var(--linha); border-radius: 8px; }
