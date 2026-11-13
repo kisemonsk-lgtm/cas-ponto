@@ -585,6 +585,11 @@
 
   $("#btnSaida16").addEventListener("click", () => marcarSaidaSelecionados("16:00"));
   $("#btnSaida18").addEventListener("click", () => marcarSaidaSelecionados("18:00"));
+  $("#btnSaidaCustom").addEventListener("click", () => {
+    const h = $("#horaSaidaCustom").value;
+    if (!h) { toast("Digite a hora de saída."); return; }
+    marcarSaidaSelecionados(h);
+  });
   $("#btnMarcarFolga").addEventListener("click", () => marcarOcorrenciaSelecionados("FO"));
   $("#btnMarcarFeriado").addEventListener("click", () => marcarOcorrenciaSelecionados("FZ"));
 
