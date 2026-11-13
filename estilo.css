@@ -227,9 +227,13 @@ table.extra select { width: 74px; margin: 0 auto; }
 
 /* barra de presença */
 .presenca-barra {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;
   padding: 10px 12px; border: 1px solid var(--linha-forte); border-radius: 8px; background: var(--thead);
 }
+.pb-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pb-grupo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pb-rot { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--suave); font-weight: 700; padding-right: 2px; }
+.pb-linha input[type="time"] { font: inherit; font-size: 14px; font-weight: 700; padding: 9px 10px; border: 1px solid var(--linha-forte); border-radius: 8px; background: var(--input-bg); color: var(--texto); }
 .pb-campo { display: flex; align-items: center; gap: 8px; }
 .pb-campo label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--suave); font-weight: 600; }
 .pb-campo input { font: inherit; font-size: 14px; font-weight: 700; padding: 7px 9px; border: 1px solid var(--linha-forte); border-radius: 8px; background: var(--input-bg); color: var(--texto); }
@@ -396,6 +400,7 @@ table.fi-tabela tfoot td { background: var(--thead); font-weight: 700; }
   html[data-tema="escuro"] .marca img { background: transparent; padding: 0; }
   .btn.tema { display: none !important; }
   .extra-topo, .no-print, .selecao-rapida, .presenca-barra { display: none !important; }
+  .painel-cab { display: block; }
   .folha-individual { break-after: page; page-break-after: always; border: none; box-shadow: none; padding: 0; max-width: none; }
   .folha-individual:last-child { break-after: auto; page-break-after: auto; }
   table.fi-tabela th, table.fi-tabela td { border-color: #000; }
