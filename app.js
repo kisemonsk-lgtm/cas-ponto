@@ -624,6 +624,16 @@
   $("#btnMarcarFolga").addEventListener("click", () => marcarOcorrenciaSelecionados("FO"));
   $("#btnMarcarFeriado").addEventListener("click", () => marcarOcorrenciaSelecionados("FZ"));
 
+  /* hora do retorno do almoço: alimenta o preenchimento automático */
+  function renderRetorno() { const el = $("#cfgRetorno"); if (el) el.value = estado.config.retornoPadrao || "13:00"; }
+  $("#cfgRetorno").addEventListener("change", (ev) => {
+    estado.config.retornoPadrao = ev.target.value || "13:00";
+    estado.config.horaSaida = estado.config.horaSaida || "16:30";
+    salvar(true);
+    renderDia(); renderResumo(); renderMes(); renderExtra(); renderIndividual();
+    toast(`Retorno do almoço: ${estado.config.retornoPadrao}.`);
+  });
+
   $("#horaPadrao").addEventListener("change", (ev) => {
     estado.config.horaPadrao = ev.target.value || "07:00";
     salvar(true);
@@ -1484,6 +1494,7 @@
   montarSelectsData();
   garantirConfigPresenca();
   renderJornada();
+  renderRetorno();
   $("#horaPadrao").value = estado.config.horaPadrao;
   renderFuncionarios();
   renderTitulos();
