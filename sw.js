@@ -1,5 +1,5 @@
 /* Cache do app para funcionar no tablet/celular mesmo sem internet */
-const CACHE = "cas-ponto-v1";
+const CACHE = "cas-ponto-v2";
 const ARQUIVOS = [
   "./",
   "./index.html",
@@ -9,7 +9,11 @@ const ARQUIVOS = [
   "./logo-cas.png",
   "./jspdf.umd.min.js",
   "./html2canvas.min.js",
-  "./manifest.webmanifest"
+  "./manifest.webmanifest",
+  "./icone-192.png",
+  "./icone-512.png",
+  "./icone-maskable-512.png",
+  "./apple-touch-icon.png"
 ];
 
 self.addEventListener("install", (ev) => {
