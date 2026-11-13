@@ -39,7 +39,7 @@
         id: "f" + (i + 1), nome, funcao, ativo: true
       })),
       registros: {},
-      config: { horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "13:00" }
+      config: { horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "13:00", horaExtra: "18:00" }
     });
   }
 
@@ -61,7 +61,7 @@
       ativo: f.ativo !== false
     }));
     d.registros = d.registros || {};
-    d.config = Object.assign({ horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "13:00" }, d.config || {});
+    d.config = Object.assign({ horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "13:00", horaExtra: "18:00" }, d.config || {});
     return d;
   }
 
@@ -347,6 +347,7 @@
     if (!c.almocoPadrao) c.almocoPadrao = "11:30";
     if (!c.retornoPadrao) c.retornoPadrao = "13:00";
     if (!c.saidaPadrao) c.saidaPadrao = "16:30";
+    if (!c.horaExtra) c.horaExtra = "18:00";
   }
 
   /** marca como PRESENTE: horários fixos (entrada, almoço e retorno) — só a saída varia */
@@ -356,7 +357,7 @@
     r.e = hora || horaPadrao();        // 07:00
     r.sa = c.almocoPadrao;             // 11:30
     r.r = c.retornoPadrao;             // 13:00
-    r.s = r.s || c.saidaPadrao;        // saída (mantém se já existir)
+    r.s = r.s || c.saidaPadrao || "16:30";   // saída padrão
     r.marca = "";
     return r;
   }
@@ -614,8 +615,28 @@
     toast(`${lista.length} falta(s) registrada(s).`);
   });
 
+  function renderSaidas() {
+    const c = estado.config;
+    if ($("#cfgSaida")) $("#cfgSaida").value = c.saidaPadrao || "16:30";
+    if ($("#cfgExtra")) $("#cfgExtra").value = c.horaExtra || "18:00";
+    if ($("#lblSaidaPadrao")) $("#lblSaidaPadrao").textContent = c.saidaPadrao || "16:30";
+    if ($("#horaSaidaCustom") && !$("#horaSaidaCustom").value) $("#horaSaidaCustom").value = c.saidaPadrao || "16:30";
+  }
+  $("#cfgSaida").addEventListener("change", (ev) => {
+    estado.config.saidaPadrao = ev.target.value || "16:30";
+    estado.config.horaSaida = estado.config.saidaPadrao;
+    salvar(true); renderSaidas();
+    toast(`Saída padrão: ${estado.config.saidaPadrao}.`);
+  });
+  $("#cfgExtra").addEventListener("change", (ev) => {
+    estado.config.horaExtra = ev.target.value || "18:00";
+    salvar(true); renderSaidas();
+    toast(`Hora extra até ${estado.config.horaExtra}.`);
+  });
+
+  $("#btnSaidaPadrao").addEventListener("click", () => marcarSaidaSelecionados(estado.config.saidaPadrao || "16:30"));
   $("#btnSaida16").addEventListener("click", () => { marcarSaidaSelecionados("16:00"); });
-  $("#btnSaida18").addEventListener("click", () => { marcarSaidaSelecionados("18:00"); });
+  $("#btnSaida18").addEventListener("click", () => { marcarSaidaSelecionados(estado.config.horaExtra || "18:00"); });
   $("#btnSaidaCustom").addEventListener("click", () => {
     const h = $("#horaSaidaCustom").value;
     if (!h) { toast("Digite a hora de saída."); return; }
@@ -1495,6 +1516,7 @@
   garantirConfigPresenca();
   renderJornada();
   renderRetorno();
+  renderSaidas();
   $("#horaPadrao").value = estado.config.horaPadrao;
   renderFuncionarios();
   renderTitulos();
