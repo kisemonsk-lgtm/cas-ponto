@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ponto Digital — CAS Construtora de Armazéns e Silos</title>
+<script src="jspdf.umd.min.js"></script>
+<script src="html2canvas.min.js"></script>
 <link rel="stylesheet" href="estilo.css">
 <script>
   /* aplica o tema antes de pintar a página (evita piscar branco) */
@@ -28,7 +30,8 @@
   <div class="topo-acoes">
     <span id="statusSalvo" class="status">salvo</span>
     <button id="btnTema" class="btn ghost tema" type="button" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">🌙</button>
-    <button id="btnImprimir" class="btn ghost" type="button">🖨 Imprimir folha</button>
+    <button id="btnImprimir" class="btn ghost" type="button" title="Imprime o que está na tela">🖨 Imprimir</button>
+    <button id="btnPDF" class="btn ghost" type="button" title="Salvar em PDF">📄 PDF</button>
     <button id="btnExportar" class="btn ghost" type="button">⬇ Exportar</button>
     <button id="btnImportar" class="btn ghost" type="button">⬆ Importar</button>
     <input type="file" id="fileImport" accept="application/json" hidden>
@@ -207,6 +210,7 @@
     <div class="campo">
       <label>&nbsp;</label>
       <button id="btnIndImprimir" class="btn" type="button">🖨 Imprimir folha</button>
+      <button id="btnIndPDF" class="btn ghost" type="button">📄 Salvar PDF</button>
     </div>
   </div>
 
