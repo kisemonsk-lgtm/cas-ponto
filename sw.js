@@ -1,5 +1,5 @@
 /* Cache do app para funcionar no tablet/celular mesmo sem internet */
-const CACHE = "cas-ponto-v5";
+const CACHE = "cas-ponto-v6";
 const ARQUIVOS = [
   "./",
   "./index.html",
