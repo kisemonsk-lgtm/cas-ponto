@@ -232,7 +232,9 @@ table.extra select { width: 74px; margin: 0 auto; }
 }
 .pb-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pb-grupo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.pb-fixos { font-size: 12.5px; font-weight: 600; color: var(--texto); background: var(--input-bg); border: 1px solid var(--linha); border-radius: 6px; padding: 6px 9px; }
+.pb-fixos { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: var(--texto); background: var(--input-bg); border: 1px solid var(--linha); border-radius: 6px; padding: 5px 9px; }
+.pb-fixos i { font-style: normal; font-weight: 500; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--suave); }
+.pb-fixos input[type="time"] { font: inherit; font-size: 13px; font-weight: 700; padding: 3px 6px; border: 1px solid var(--linha-forte); border-radius: 5px; background: var(--card); color: var(--texto); }
 .pb-rot { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--suave); font-weight: 700; padding-right: 2px; }
 .pb-linha input[type="time"] { font: inherit; font-size: 14px; font-weight: 700; padding: 9px 10px; border: 1px solid var(--linha-forte); border-radius: 8px; background: var(--input-bg); color: var(--texto); }
 .pb-campo { display: flex; align-items: center; gap: 8px; }
