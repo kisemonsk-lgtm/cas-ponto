@@ -213,7 +213,10 @@
   }
 
   /** marcados no Ponto do dia */
-  function idsSelecionados() { return new Set(estado.selecionados || []); }
+  function idsSelecionados() {
+    if (!Array.isArray(estado.selecionados)) estado.selecionados = [];
+    return new Set(estado.selecionados);
+  }
 
   function situacao(r) {
     if (!r) return "vazio";
@@ -389,7 +392,27 @@
   function marcarSaidaSelecionados(horaSaida) {
     const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
     const sel = idsSelecionados();
-    if (!sel.size) { toast("Marque primeiro os funcionários na lista (☑)."); return; }
+    if (!sel.size) {
+      // nenhum marcado: aplica em TODOS os que já têm entrada lançada no dia
+      const comEntrada = estado.funcionarios.filter((f) => {
+        const r = reg(f.id, a, m, d);
+        return r && r.e && !r.marca;
+      });
+      if (!comEntrada.length) {
+        toast("Marque quem saiu (☑) ou registre a entrada primeiro.");
+        return;
+      }
+      let n2 = 0;
+      comEntrada.forEach((f) => {
+        const r = garantirReg(f.id, a, m, d);
+        r.s = horaSaida;
+        n2++;
+      });
+      salvar(true);
+      renderDia(); renderResumo(); renderMes(); renderExtra(); renderIndividual();
+      toast(`Saída ${horaSaida} aplicada em todos os ${n2} que já tinham entrada.`);
+      return;
+    }
     const c = estado.config;
     let n = 0;
     estado.funcionarios.forEach((f) => {
@@ -507,7 +530,7 @@
       if (ev.target.checked && i < 0) estado.selecionados.push(id);
       if (!ev.target.checked && i >= 0) estado.selecionados.splice(i, 1);
       tr.classList.toggle("linha-sel", ev.target.checked);
-      salvar(); renderResumo(); atualizarInfoPresenca();
+      salvar(true); renderResumo(); atualizarInfoPresenca();
       return;
     }
 
@@ -533,7 +556,7 @@
   $("#selTodosDia").addEventListener("change", (e) => {
     const lista = funcionariosFiltrados();
     estado.selecionados = e.target.checked ? lista.map((f) => f.id) : [];
-    salvar(); renderDia(); renderResumo();
+    salvar(true); renderDia(); renderResumo();
   });
 
   $("#btnTudoPresente").addEventListener("click", () => {
@@ -583,8 +606,8 @@
     toast(`${lista.length} falta(s) registrada(s).`);
   });
 
-  $("#btnSaida16").addEventListener("click", () => marcarSaidaSelecionados("16:00"));
-  $("#btnSaida18").addEventListener("click", () => marcarSaidaSelecionados("18:00"));
+  $("#btnSaida16").addEventListener("click", () => { marcarSaidaSelecionados("16:00"); });
+  $("#btnSaida18").addEventListener("click", () => { marcarSaidaSelecionados("18:00"); });
   $("#btnSaidaCustom").addEventListener("click", () => {
     const h = $("#horaSaidaCustom").value;
     if (!h) { toast("Digite a hora de saída."); return; }
