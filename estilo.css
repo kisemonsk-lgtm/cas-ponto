@@ -332,10 +332,56 @@ table.fi-tabela tfoot td { background: var(--thead); font-weight: 700; }
 }
 .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ================= TABLET / TOQUE ================= */
+/* alvos de toque confortáveis (dedo, não mouse) */
+@media (pointer: coarse), (max-width: 1180px) {
+  .btn { padding: 11px 16px; font-size: 14px; min-height: 44px; }
+  .btn.mini { padding: 9px 12px; font-size: 13px; min-height: 40px; }
+  .btn.tema { min-width: 44px; }
+  .tab { padding: 12px 18px; font-size: 14px; }
+  .campo select, .campo input { padding: 10px 12px; font-size: 15px; min-height: 44px; }
+  .grade input[type="text"], .grade input[type="time"], .grade select { padding: 8px 8px; font-size: 15px; min-height: 40px; }
+  .grade input[type="checkbox"], .sr-item input { width: 22px; height: 22px; }
+  .grade td { padding: 4px 8px; }
+  .grade tbody tr { height: auto; }
+  .pb-campo input { font-size: 16px; min-height: 44px; }
+  .sr-item { padding: 9px 10px; font-size: 14px; }
+  .folhas { gap: 12px; }
+  /* deixa a tabela do dia rolar na horizontal sem quebrar o layout */
+  .tabela-wrap { -webkit-overflow-scrolling: touch; }
+  table.grade { min-width: 980px; }
+  table.folha { min-width: 900px; }
+  /* evita o zoom automático do iOS/Android ao focar campos */
+  input, select, textarea { font-size: 16px !important; }
+}
+
+@media (max-width: 1024px) {
+  .filtros { gap: 10px; }
+  .campo { flex: 1 1 140px; }
+  .campo.grow { flex: 1 1 100%; }
+  .botoes { margin-left: 0; width: 100%; }
+  .botoes .btn { flex: 1; }
+  .resumo { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .presenca-barra .btn { flex: 1 1 auto; }
+  .individual-topo .campo { flex: 1 1 auto; }
+}
+
 @media (max-width: 720px) {
   .painel { margin: 0 10px 16px; padding: 12px; }
   .resumo, .filtros, .tabs, .topo, .rodape { padding-left: 10px; padding-right: 10px; }
   .botoes { margin-left: 0; width: 100%; }
+  .marca img { height: 38px; }
+  .marca h1 { font-size: 15px; }
+  .topo-acoes { width: 100%; }
+  .topo-acoes .btn { flex: 1 1 auto; }
+  .resumo { grid-template-columns: repeat(2, 1fr); }
+  .sr-lista { grid-template-columns: 1fr; }
+  .barra-func .btn, .barra-func label.btn { flex: 1 1 auto; }
+  .fi-topo { flex-wrap: wrap; gap: 3mm; }
+  .fi-mes { text-align: left; }
+  .fi-campos { gap: 2mm 5mm; }
+  .fi-assinaturas { flex-direction: column; gap: 8mm; }
+  .folha-individual { padding: 6mm 5mm; }
 }
 
 /* ================= IMPRESSÃO ================= */
