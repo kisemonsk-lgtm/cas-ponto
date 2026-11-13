@@ -113,7 +113,7 @@
   <div class="painel-cab">
     <h2 id="tituloDia">Ponto do dia</h2>
     <div class="legenda">
-      <span><b>F</b> falta</span><span><b>AT</b> atestado</span><span><b>FE</b> férias</span><span><b>FO</b> folga</span>
+      <span><b>F</b> falta</span><span><b>AT</b> atestado</span><span><b>FE</b> férias</span><span><b>FO</b> folga</span><span><b>FZ</b> feriado</span>
       <span>Jornada: <b>8h/dia</b> — entrada <b>07:00</b> · almoço <b>11:30–12:30</b> · saída <b>16:30</b>.</span>
     </div>
   </div>
@@ -125,6 +125,8 @@
     </div>
     <button id="btnRegistrarPresenca" class="btn" type="button">✅ Registrar ponto: marcar como veio</button>
     <button id="btnFecharDia" class="btn ghost danger" type="button">❌ Não veio → falta</button>
+    <button id="btnMarcarFolga" class="btn ghost" type="button" title="Marca folga nos selecionados">🛋 Folga</button>
+    <button id="btnMarcarFeriado" class="btn ghost" type="button" title="Marca feriado nos selecionados">📅 Feriado</button>
     <span class="pb-info" id="pbInfo">Selecione quem veio e clique em registrar.</span>
   </div>
 
@@ -274,6 +276,14 @@
     <h2>Funcionários</h2>
     <div class="legenda"><span>Nome, função e ativo. A numeração é automática.</span></div>
   </div>
+  <div class="barra-func">
+    <span id="infoFunc" class="info-func">—</span>
+    <button id="btnRestaurarLista" class="btn ghost" type="button" title="Restaura a lista a partir do backup automático">↺ Restaurar lista (backup)</button>
+    <button id="btnBaixarLista" class="btn ghost" type="button">⬇ Baixar lista (.json)</button>
+    <label class="btn ghost" for="fileLista" style="margin:0">⬆ Carregar lista (.json)</label>
+    <input type="file" id="fileLista" accept="application/json" hidden>
+  </div>
+
   <form id="formFunc" class="form-func">
     <input id="fNome" type="text" placeholder="Nome completo" required>
     <input id="fFuncao" type="text" placeholder="Função" required>
