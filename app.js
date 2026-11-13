@@ -33,7 +33,7 @@
         id: "f" + (i + 1), nome, funcao, ativo: true
       })),
       registros: {},
-      config: { horaEntrada: "07:30", horaSaida: "16:30", cargaDiaria: 7, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50 }
+      config: { horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 7, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "12:00", retornoPadrao: "13:00" }
     });
   }
 
@@ -45,7 +45,7 @@
       ativo: f.ativo !== false
     }));
     d.registros = d.registros || {};
-    d.config = Object.assign({ horaEntrada: "07:30", horaSaida: "16:30", cargaDiaria: 7, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50 }, d.config || {});
+    d.config = Object.assign({ horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 7, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "12:00", retornoPadrao: "13:00" }, d.config || {});
     return d;
   }
 
@@ -182,6 +182,9 @@
     return { normais, extras, extras50, extras100, valor, presentes };
   }
 
+  /** marcados no Ponto do dia */
+  function idsSelecionados() { return new Set(estado.selecionados || []); }
+
   function situacao(r) {
     if (!r) return "vazio";
     if (r.marca) return r.marca;              // F, AT, FE, FO
@@ -294,6 +297,59 @@
     $("#diasInfo").textContent = `Dias 1 a ${total} • ${MESES[m]}/${a}`;
   }
 
+  /* ---------------- PRESENÇA: QUEM VEIO / QUEM FALTOU ---------------- */
+  function horaPadrao() {
+    const el = $("#horaPadrao");
+    return (el && el.value) || estado.config.horaPadrao || "07:00";
+  }
+
+  function garantirConfigPresenca() {
+    const c = estado.config;
+    if (!c.horaPadrao) c.horaPadrao = "07:00";
+    if (!c.almocoPadrao) c.almocoPadrao = "12:00";
+    if (!c.retornoPadrao) c.retornoPadrao = "13:00";
+    if (!c.saidaPadrao) c.saidaPadrao = "16:30";
+  }
+
+  /** marca como PRESENTE: entrada padrão (07:00) + horário normal de jornada */
+  function marcarPresente(fid, a, m, d, hora) {
+    const r = garantirReg(fid, a, m, d);
+    const c = estado.config;
+    r.e = hora || horaPadrao();
+    r.sa = r.sa || c.almocoPadrao;
+    r.r = r.r || c.retornoPadrao;
+    r.s = r.s || c.saidaPadrao;
+    r.marca = "";
+    if (!r.obs) r.obs = "";
+    return r;
+  }
+
+  /** marca como FALTA (não veio) */
+  function marcarFalta(fid, a, m, d) {
+    const r = garantirReg(fid, a, m, d);
+    r.e = r.sa = r.r = r.s = "";
+    r.marca = "F";
+    if (!r.obs) r.obs = "não veio";
+    return r;
+  }
+
+  function atualizarInfoPresenca() {
+    const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
+    const sel = idsSelecionados();
+    let vieram = 0, faltaram = 0, semReg = 0;
+    estado.funcionarios.forEach((f) => {
+      const r = reg(f.id, a, m, d);
+      const sit = situacao(r);
+      if (sit === "F") faltaram++;
+      else if (sit === "ok") vieram++;
+      else semReg++;
+    });
+    const info = $("#pbInfo");
+    if (info) {
+      info.innerHTML = `<b>${vieram}</b> vieram · <b class="pf">${faltaram}</b> faltaram · <b>${semReg}</b> sem registro · <b>${sel.size}</b> marcados na lista`;
+    }
+  }
+
   /* ---------------- ABA: PONTO DO DIA ---------------- */
   function renderDia() {
     const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
@@ -336,6 +392,7 @@
       tbody.appendChild(tr);
       pintarHoras(tr, r);
     });
+    atualizarInfoPresenca();
   }
 
   function pintarHoras(tr, r) {
@@ -373,7 +430,7 @@
       if (ev.target.checked && i < 0) estado.selecionados.push(id);
       if (!ev.target.checked && i >= 0) estado.selecionados.splice(i, 1);
       tr.classList.toggle("linha-sel", ev.target.checked);
-      salvar(); renderResumo();
+      salvar(); renderResumo(); atualizarInfoPresenca();
       return;
     }
 
@@ -410,6 +467,43 @@
     });
     salvar(true); renderDia(); renderResumo(); renderMes();
     toast(`Entrada ${hora} lançada para ${alvo.length} funcionário(s).`);
+  });
+
+  $("#btnRegistrarPresenca").addEventListener("click", () => {
+    const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
+    const sel = idsSelecionados();
+    if (!sel.size) { toast("Marque primeiro quem veio (☑ na lista)."); return; }
+    const hora = horaPadrao();
+    let n = 0;
+    estado.funcionarios.forEach((f) => {
+      if (!sel.has(f.id)) return;
+      marcarPresente(f.id, a, m, d, hora);
+      n++;
+    });
+    estado.config.horaPadrao = hora;
+    salvar(true);
+    renderDia(); renderResumo(); renderMes(); renderExtra(); renderIndividual();
+    toast(`Ponto registrado para ${n} funcionário(s) — entrada ${hora}.`);
+  });
+
+  $("#btnFecharDia").addEventListener("click", () => {
+    const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
+    const sel = idsSelecionados();
+    const wd = nomeDia(a, m, d);
+    const nomeSem = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][wd];
+    const lista = estado.funcionarios.filter((f) => !sel.has(f.id));
+    if (!lista.length) { toast("Todos estão selecionados — ninguém para marcar como falta."); return; }
+    if (!confirm(`Marcar FALTA em ${lista.length} funcionário(s) não selecionado(s) em ${pad(d)}/${pad(m + 1)}/${a} (${nomeSem})?`)) return;
+
+    lista.forEach((f) => marcarFalta(f.id, a, m, d));
+    salvar(true);
+    renderDia(); renderResumo(); renderMes(); renderExtra(); renderIndividual();
+    toast(`${lista.length} falta(s) registrada(s).`);
+  });
+
+  $("#horaPadrao").addEventListener("change", (ev) => {
+    estado.config.horaPadrao = ev.target.value || "07:00";
+    salvar(true);
   });
 
   $("#btnLimparDia").addEventListener("click", () => {
@@ -773,9 +867,6 @@
   /** marcados no Ponto do dia */
   let gerarTodos = false;
 
-  /** marcados no Ponto do dia */
-  function idsSelecionados() { return new Set(estado.selecionados || []); }
-
   function renderListaSelecao() {
     const sel = idsSelecionados();
     const lista = $("#srLista");
@@ -1083,6 +1174,8 @@
   estado.selecionados = estado.selecionados || [];
   montarSelectsData();
   renderJornada();
+  garantirConfigPresenca();
+  $("#horaPadrao").value = estado.config.horaPadrao;
   renderFuncionarios();
   renderTitulos();
   renderDia();
