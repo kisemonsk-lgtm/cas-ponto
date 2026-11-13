@@ -711,6 +711,133 @@
       .folha-individual td.falta, .folha-individual td.at, .folha-individual td.fe, .folha-individual td.fo { color: #000 !important; }`;
   }
 
+
+  /* ---------------- PDF ---------------- */
+  const CSS_FOLHA = `
+    @page { size: A4 portrait; margin: 10mm; }
+    html, body { background: #fff !important; color: #000 !important; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+    .folha-individual { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; max-width: 190mm !important; width: 190mm !important; background: #fff !important; color: #000 !important; }
+    .fi-topo { display: flex; align-items: center; gap: 6mm; border-bottom: 1.5px solid #000; padding-bottom: 2.5mm; }
+    .fi-topo img { width: 20mm; }
+    .fi-empresa { flex: 1; display: flex; flex-direction: column; }
+    .fi-empresa strong { font-size: 11.5pt; }
+    .fi-empresa .fi-doc { font-size: 8pt; font-weight: 700; letter-spacing: .8px; margin-top: .5mm; }
+    .fi-mes { text-align: right; }
+    .fi-mes-txt { font-size: 11pt; font-weight: 700; }
+    .fi-num { font-size: 9pt; color: #444; margin-top: 1mm; }
+    .fi-campos { display: flex; flex-wrap: wrap; gap: 2mm 8mm; padding: 2.5mm 0; border-bottom: 1px solid #000; margin-bottom: 2mm; }
+    .fi-campos div { display: flex; flex-direction: column; }
+    .fi-campos .fi-campo-nome { flex: 1 1 100%; }
+    .fi-campos span { font-size: 6.4pt; text-transform: uppercase; letter-spacing: .4px; color: #444; }
+    .fi-campos b { font-size: 9.5pt; font-weight: 600; }
+    table.fi-tabela { width: 100%; border-collapse: collapse; font-size: 8.2pt; }
+    table.fi-tabela th, table.fi-tabela td { border: 1px solid #000; padding: .8mm 1.2mm; text-align: center; line-height: 1.15; }
+    table.fi-tabela th { font-size: 6.6pt; text-transform: uppercase; background: #f0f0f0; color: #000; }
+    table.fi-tabela td.d-num, table.fi-tabela td.d-sem { width: 12mm; }
+    table.fi-tabela td.d-sem { color: #444; font-size: 7.2pt; }
+    table.fi-tabela td.d-tot, table.fi-tabela td.d-ex { width: 16mm; font-weight: 600; }
+    table.fi-tabela td.d-oc { text-align: left; }
+    table.fi-tabela tfoot td { background: #f0f0f0; font-weight: 700; }
+    table.fi-tabela tr.linha-dom td { color: #555; }
+    .fi-tot-rot { text-align: right !important; font-size: 8pt; }
+    .fi-resumo { display: flex; flex-wrap: wrap; gap: 2mm 5mm; margin-top: 2.5mm; padding: 1.6mm 2.4mm; border: 1px solid #999; font-size: 8.4pt; align-items: center; }
+    .fi-resumo span { display: inline-flex; gap: 1.2mm; align-items: baseline; }
+    .fi-resumo i { font-style: normal; font-size: 6.4pt; text-transform: uppercase; color: #444; }
+    .fi-resumo b { font-size: 9pt; }
+    .fi-resumo .fi-data { margin-left: auto; }
+    .fi-assinaturas { display: flex; gap: 10mm; margin-top: 8mm; }
+    .fi-ass { flex: 1; text-align: center; font-size: 7.6pt; color: #333; }
+    .fi-ass span { display: block; border-top: 1px solid #000; margin-bottom: 1.2mm; height: 8mm; }
+    .folha-individual td.falta, .folha-individual td.at, .folha-individual td.fe,
+    .folha-individual td.fo, .folha-individual td.fz { color: #000 !important; font-weight: 700; }
+  `;
+
+  /** monta a folha em um contêiner fora da tela para gerar o PDF */
+  function montarFolhaOculta(html) {
+    const caixa = document.createElement("div");
+    caixa.id = "caixaPDF";
+    caixa.style.cssText = "position:fixed;left:-10000px;top:0;width:190mm;background:#fff;color:#000;z-index:-1";
+    caixa.innerHTML = `<style>${CSS_FOLHA}</style>${html}`;
+    document.body.appendChild(caixa);
+    return caixa;
+  }
+
+  /** gera o PDF da folha do funcionário escolhido */
+  async function gerarPDFFolha() {
+    const a = Number($("#ano").value), m = Number($("#mes").value);
+    const id = preencherSelectFunc();
+    const f = estado.funcionarios.find((x) => x.id === id);
+    if (!f) { toast("Escolha um funcionário."); return; }
+
+    if (!window.html2canvas || !window.jspdf) { toast("Biblioteca de PDF não carregou — usando a impressão do navegador."); window.print(); return; }
+
+    const num = estado.funcionarios.findIndex((x) => x.id === f.id) + 1;
+    const caixa = montarFolhaOculta(folhaHTML(f, num, a, m));
+    toast("Gerando PDF…");
+
+    try {
+      // aguarda a logo carregar
+      await Promise.all(Array.from(caixa.querySelectorAll("img")).map((img) =>
+        img.complete ? Promise.resolve() : new Promise((ok) => { img.onload = img.onerror = ok; })));
+
+      const tela = await window.html2canvas(caixa, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const larguraPagina = 210, alturaPagina = 297;
+      const margem = 8;
+      const larg = larguraPagina - margem * 2;
+      const alt = (tela.height * larg) / tela.width;
+
+      if (alt <= alturaPagina - margem * 2) {
+        pdf.addImage(tela.toDataURL("image/jpeg", 0.95), "JPEG", margem, margem, larg, alt);
+      } else {
+        // não deveria acontecer (folha cabe em 1 página), mas garante a quebra correta
+        const alturaUtil = alturaPagina - margem * 2;
+        let restante = tela.height, y = 0;
+        while (restante > 0) {
+          const alturaRecorte = Math.min(restante, (alturaUtil * tela.width) / larg);
+          const canvas = document.createElement("canvas");
+          canvas.width = tela.width;
+          canvas.height = alturaRecorte;
+          canvas.getContext("2d").drawImage(tela, 0, y, tela.width, alturaRecorte, 0, 0, tela.width, alturaRecorte);
+          pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", margem, margem,
+            larg, (alturaRecorte * larg) / tela.width);
+          restante -= alturaRecorte; y += alturaRecorte;
+          if (restante > 0) pdf.addPage();
+        }
+      }
+
+      const nomeArquivo = `folha-ponto-${f.nome.split(" ")[0].toLowerCase()}-${String(num).padStart(2, "0")}-${pad(m + 1)}-${a}.pdf`;
+      pdf.save(nomeArquivo);
+      toast("PDF salvo.");
+    } catch (e) {
+      console.error(e);
+      toast("Não foi possível gerar o PDF — use Imprimir e escolha “Salvar como PDF”.");
+    } finally {
+      caixa.remove();
+    }
+  }
+
+  /** PDF das abas de tabela (dia, mês, extras): usa a impressão do navegador */
+  function imprimirOuPDF(aba) {
+    const alvo = ["mes", "extra"].includes(aba) ? aba : "dia";
+    if (alvo === "mes") renderMes();
+    if (alvo === "extra") renderExtra();
+    const anterior = $(".tab.ativo").dataset.tab;
+    $$(".painel").forEach((p) => p.classList.toggle("oculto", p.id !== "tab-" + alvo));
+    window.print();
+    setTimeout(() => trocarTab(anterior), 300);
+  }
+
+  $("#btnPDF").addEventListener("click", () => {
+    const aba = $(".tab.ativo").dataset.tab;
+    if (aba === "individual") { gerarPDFFolha(); return; }
+    imprimirOuPDF(aba);
+  });
+
+  $("#btnIndPDF").addEventListener("click", gerarPDFFolha);
+
   /* ---------------- ABA: HORAS EXTRAS ---------------- */
   function renderExtra() {
     const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
