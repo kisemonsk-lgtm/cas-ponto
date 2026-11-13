@@ -25,7 +25,13 @@
       const bruto = localStorage.getItem(CHAVE);
       if (bruto) {
         const dados = JSON.parse(bruto);
-        if (dados && dados.funcionarios) return normalizar(dados);
+        if (dados && Array.isArray(dados.funcionarios) && dados.funcionarios.length) return normalizar(dados);
+      }
+      // lista principal vazia ou corrompida: tenta o backup automático
+      const reserva = lerBackupFuncionarios();
+      if (reserva) {
+        console.warn("Restaurando lista de funcionários do backup automático");
+        return normalizar({ funcionarios: reserva, registros: {}, config: {} });
       }
     } catch (e) { console.warn("Falha ao ler dados salvos", e); }
     return normalizar({
@@ -35,6 +41,16 @@
       registros: {},
       config: { horaEntrada: "07:00", horaSaida: "16:30", cargaDiaria: 8, tolerancia: 5, valorHora: 0, diasUteis: 22, fator: 50, horaPadrao: "07:00", saidaPadrao: "16:30", almocoPadrao: "11:30", retornoPadrao: "12:30" }
     });
+  }
+
+  function lerBackupFuncionarios() {
+    try {
+      const bruto = localStorage.getItem("cas-ponto-funcionarios");
+      if (!bruto) return null;
+      const d = JSON.parse(bruto);
+      if (d && Array.isArray(d.lista) && d.lista.length) return d.lista;
+    } catch (e) {}
+    return null;
   }
 
   function normalizar(d) {
@@ -49,6 +65,19 @@
     return d;
   }
 
+  /* ---- backup automático da lista de funcionários (nunca se perde) ---- */
+  function backupFuncionarios(imediato) {
+    const lista = (estado.funcionarios || []).map((f) => ({ id: f.id, nome: f.nome, funcao: f.funcao, ativo: f.ativo }));
+    try {
+      localStorage.setItem("cas-ponto-funcionarios", JSON.stringify({ quando: new Date().toISOString(), lista }));
+    } catch (e) {}
+    // também guarda uma cópia em arquivo (quando o navegador permitir)
+    try {
+      const blob = new Blob([JSON.stringify({ funcionarios: lista }, null, 2)], { type: "application/json" });
+      localStorage.setItem("cas-ponto-funcionarios-arquivo", JSON.stringify({ tamanho: blob.size }));
+    } catch (e) {}
+  }
+
   let salvarTimer = null;
   function salvar(imediato) {
     clearTimeout(salvarTimer);
@@ -58,6 +87,7 @@
     const gravar = () => {
       try {
         localStorage.setItem(CHAVE, JSON.stringify(estado));
+        backupFuncionarios();
         status.textContent = "salvo";
         status.classList.remove("pendente");
       } catch (e) {
@@ -166,7 +196,7 @@
       const r = reg(fid, a, m, d);
       if (!r) continue;
       const sit = situacao(r);
-      if (sit === "F" || sit === "AT" || sit === "FE" || sit === "FO" || sit === "vazio") continue;
+      if (["F", "AT", "FE", "FO", "FZ", "vazio"].includes(sit)) continue;
       const min = minutosTrabalhados(r);
       if (min === null) continue;
       presentes++;
@@ -353,6 +383,26 @@
     }
   }
 
+  /** marca ocorrência (F, AT, FE, FO, FZ) nos funcionários selecionados */
+  function marcarOcorrenciaSelecionados(tipo) {
+    const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
+    const sel = idsSelecionados();
+    if (!sel.size) { toast("Marque primeiro os funcionários na lista (☑)."); return; }
+    const rotulos = { F: "falta", AT: "atestado", FE: "férias", FO: "folga", FZ: "feriado" };
+    let n = 0;
+    estado.funcionarios.forEach((f) => {
+      if (!sel.has(f.id)) return;
+      const r = garantirReg(f.id, a, m, d);
+      r.e = r.sa = r.r = r.s = "";
+      r.marca = tipo;
+      r.obs = rotulos[tipo] || "";
+      n++;
+    });
+    salvar(true);
+    renderDia(); renderResumo(); renderMes(); renderExtra(); renderIndividual();
+    toast(`${n} funcionário(s) marcados como ${rotulos[tipo] || tipo}.`);
+  }
+
   /* ---------------- ABA: PONTO DO DIA ---------------- */
   function renderDia() {
     const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
@@ -374,8 +424,8 @@
       if (sel.has(f.id)) tr.classList.add("linha-sel");
       if (!f.ativo) tr.style.opacity = ".55";
 
-      const marcaOpts = ["", "F", "AT", "FE", "FO"].map((v) =>
-        `<option value="${v}" ${(r.marca || "") === v ? "selected" : ""}>${v || "—"}</option>`).join("");
+      const marcaOpts = [["", "—"], ["F", "F"], ["AT", "AT"], ["FE", "FE"], ["FO", "FO"], ["FZ", "FZ"]].map(([v, rot]) =>
+        `<option value="${v}" ${(r.marca || "") === v ? "selected" : ""}>${rot}</option>`).join("");
 
       tr.innerHTML = `
         <td class="c-sel"><input type="checkbox" data-sel ${sel.has(f.id) ? "checked" : ""}></td>
@@ -403,7 +453,7 @@
     if (!cel) return;
     const sit = situacao(r);
     if (sit === "F") { cel.innerHTML = '<span class="marca f">FALTA</span>'; return; }
-    if (sit === "AT" || sit === "FE" || sit === "FO") {
+    if (["AT", "FE", "FO", "FZ"].includes(sit)) {
       cel.innerHTML = `<span class="marca ${sit.toLowerCase()}">${sit}</span>`;
       return;
     }
@@ -442,6 +492,11 @@
     const r = garantirReg(id, a, m, d);
     r[campo] = ev.target.value;
     if (campo === "marca" && ev.target.value) { r.e = r.sa = r.r = r.s = ""; }
+    if (campo === "marca" && ev.target.value === "FO" && !r.obs) r.obs = "folga";
+    if (campo === "marca" && ev.target.value === "FZ" && !r.obs) r.obs = "feriado";
+    if (campo === "marca" && ev.target.value === "FE" && !r.obs) r.obs = "férias";
+    if (campo === "marca" && ev.target.value === "AT" && !r.obs) r.obs = "atestado";
+    if (campo === "marca" && ev.target.value === "F" && !r.obs) r.obs = "falta";
     if (["e", "sa", "r", "s"].includes(campo) && ev.target.value) r.marca = "";
     if (!r.e && !r.sa && !r.r && !r.s && !r.obs && !r.marca && !r.extra && !r.fator) {
       delete estado.registros[chaveData(a, m, d)][id];
@@ -503,6 +558,9 @@
     renderDia(); renderResumo(); renderMes(); renderExtra(); renderIndividual();
     toast(`${lista.length} falta(s) registrada(s).`);
   });
+
+  $("#btnMarcarFolga").addEventListener("click", () => marcarOcorrenciaSelecionados("FO"));
+  $("#btnMarcarFeriado").addEventListener("click", () => marcarOcorrenciaSelecionados("FZ"));
 
   $("#horaPadrao").addEventListener("change", (ev) => {
     estado.config.horaPadrao = ev.target.value || "07:00";
@@ -571,6 +629,7 @@
         else if (sit === "AT") { texto = "AT"; cls.push("at"); }
         else if (sit === "FE") { texto = "FE"; cls.push("fe"); }
         else if (sit === "FO") { texto = "FO"; cls.push("fo"); }
+        else if (sit === "FZ") { texto = "FZ"; cls.push("fz"); }
         else { texto = "·"; cls.push("vazio"); }
 
         if (wd !== 0 && sit !== "vazio") diasUteis++;
@@ -607,13 +666,14 @@
     const a = Number($("#ano").value), m = Number($("#mes").value), d = diaSelecionado;
     const lista = funcionariosFiltrados();
     const sel = new Set(estado.selecionados || []);
-    let presentes = 0, problemas = 0, totalMin = 0;
+    let presentes = 0, problemas = 0, totalMin = 0, folgas = 0;
 
     estado.funcionarios.forEach((f) => {
       const r = reg(f.id, a, m, d);
       const sit = situacao(r);
       if (sit === "ok") { presentes++; const min = minutosTrabalhados(r); if (min) totalMin += min; }
       if (sit === "F") problemas++;
+      if (sit === "FO" || sit === "FZ") folgas++;
     });
 
     $("#rData").textContent = fmtDataCurta(a, m, d);
@@ -796,6 +856,7 @@
       if (sit === "AT") cls.push("at");
       if (sit === "FE") cls.push("fe");
       if (sit === "FO") cls.push("fo");
+      if (sit === "FZ") cls.push("fz");
 
       const ex = r ? minutosExtras(r) : 0;
       linhas += `<tr class="${wd === 0 ? "linha-dom" : ""}">
@@ -807,7 +868,7 @@
         <td>${r ? escapar(r.s || "") : ""}</td>
         <td class="d-tot">${r && r.e && r.s ? paraHoras(minutosTrabalhados(r) || 0) : ""}</td>
         <td class="d-ex">${ex ? "+" + paraHoras(ex) : ""}</td>
-        <td class="d-oc">${sit === "F" || sit === "AT" || sit === "FE" || sit === "FO" ? sit : (r && r.obs ? escapar(r.obs) : "")}</td>
+        <td class="d-oc">${["F", "AT", "FE", "FO", "FZ"].includes(sit) ? sit + (r && r.obs ? " — " + escapar(r.obs) : "") : (r && r.obs ? escapar(r.obs) : "")}</td>
       </tr>`;
     }
 
@@ -998,7 +1059,7 @@
     tbody.innerHTML = estado.funcionarios.map((f, i) => `
       <tr data-id="${f.id}">
         <td class="c-num">${i + 1}</td>
-        <td class="c-nome">${escapar(f.nome)}</td>
+        <td class="c-nome">${escapar(f.nome)}${f.novo ? ' <span class="tag-novo">novo</span>' : ""}</td>
         <td class="c-func">${escapar(f.funcao)}</td>
         <td class="c-h" style="text-align:center">${f.ativo ? "Sim" : "Não"}</td>
         <td class="c-acoes">
@@ -1007,7 +1068,60 @@
         </td>
       </tr>`).join("") || `<tr><td colspan="5" style="padding:24px;text-align:center;color:#6b7280">Nenhum funcionário cadastrado.</td></tr>`;
     renderFiltroFuncoes();
+    const info = $("#infoFunc");
+    if (info) {
+      const ativos = estado.funcionarios.filter((f) => f.ativo).length;
+      const novos = estado.funcionarios.filter((f) => f.novo).length;
+      let quando = "";
+      try {
+        const b = JSON.parse(localStorage.getItem("cas-ponto-funcionarios") || "null");
+        if (b && b.quando) quando = " · backup " + new Date(b.quando).toLocaleString("pt-BR");
+      } catch (e) {}
+      info.textContent = `${estado.funcionarios.length} cadastrado(s) · ${ativos} ativo(s)${novos ? ` · ${novos} novo(s)` : ""} · salvos automaticamente${quando}`;
+    }
   }
+
+  /* ---- manter a lista de funcionários segura ---- */
+  $("#btnBaixarLista").addEventListener("click", () => {
+    const dados = { funcionarios: estado.funcionarios };
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "funcionarios-CAS.json";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+    toast("Lista de funcionários baixada.");
+  });
+
+  $("#btnRestaurarLista").addEventListener("click", () => {
+    const lista = lerBackupFuncionarios();
+    if (!lista) { toast("Nenhum backup encontrado."); return; }
+    if (!confirm(`Restaurar ${lista.length} funcionário(s) do backup automático? A lista atual será substituída.`)) return;
+    estado.funcionarios = normalizar({ funcionarios: lista }).funcionarios;
+    salvar(true);
+    renderFuncionarios(); renderDia(); renderMes(); renderResumo(); renderIndividual();
+    toast("Lista restaurada do backup.");
+  });
+
+  $("#fileLista").addEventListener("change", (ev) => {
+    const arq = ev.target.files[0];
+    if (!arq) return;
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      try {
+        const d = JSON.parse(leitor.result);
+        const lista = Array.isArray(d) ? d : (d.funcionarios || (d.lista || null));
+        if (!Array.isArray(lista) || !lista.length) throw new Error("sem lista");
+        if (!confirm(`Carregar ${lista.length} funcionário(s) deste arquivo? A lista atual será substituída.`)) return;
+        estado.funcionarios = normalizar({ funcionarios: lista }).funcionarios;
+        salvar(true);
+        renderFuncionarios(); renderDia(); renderMes(); renderResumo(); renderIndividual();
+        toast("Lista carregada.");
+      } catch (e) { toast("Arquivo inválido."); }
+      ev.target.value = "";
+    };
+    leitor.readAsText(arq);
+  });
 
   function renderFiltroFuncoes() {
     const atual = $("#filtroFuncao").value;
@@ -1027,8 +1141,11 @@
       if (f) { f.nome = nome; f.funcao = funcao; f.ativo = $("#fAtivo").checked; }
       toast("Funcionário atualizado.");
     } else {
-      estado.funcionarios.push({ id: "f" + Date.now().toString(36), nome, funcao, ativo: $("#fAtivo").checked });
-      toast("Funcionário adicionado.");
+      estado.funcionarios.push({
+        id: "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        nome, funcao, ativo: $("#fAtivo").checked, novo: true
+      });
+      toast("Funcionário adicionado e salvo.");
     }
     cancelarEdicao();
     salvar(true);
