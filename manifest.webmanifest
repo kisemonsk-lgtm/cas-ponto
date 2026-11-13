@@ -1,6 +1,6 @@
 {
-  "name": "Ponto CAS — Construtora de Armazéns e Silos",
-  "short_name": "Ponto CAS",
+  "name": "Batedor de Ponto 2.0 — CAS Construtora de Armazéns e Silos",
+  "short_name": "Batedor 2.0",
   "description": "Controle de ponto da CAS Construtora de Armazéns e Silos",
   "start_url": "./index.html",
   "scope": "./",
