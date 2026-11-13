@@ -129,22 +129,37 @@
     <h2 id="tituloDia">Ponto do dia</h2>
     <div class="legenda">
       <span><b>F</b> falta</span><span><b>AT</b> atestado</span><span><b>FE</b> férias</span><span><b>FO</b> folga</span><span><b>FZ</b> feriado</span>
-      <span>Jornada: <b>8h/dia</b> — entrada <b>07:00</b> · almoço <b>11:30–13:00</b> · saída <b>16:00</b>.</span>
     </div>
   </div>
 
   <div class="presenca-barra">
-    <div class="pb-campo">
-      <label for="horaPadrao">Entrada padrão</label>
-      <input id="horaPadrao" type="time" value="07:00">
+    <div class="pb-linha">
+      <div class="pb-campo">
+        <label for="horaPadrao">Entrada padrão</label>
+        <input id="horaPadrao" type="time" value="07:00">
+      </div>
+      <div class="pb-grupo">
+        <span class="pb-rot">Entrada</span>
+        <button id="btnRegistrarPresenca" class="btn" type="button">✅ Veio (registrar ponto)</button>
+        <button id="btnFecharDia" class="btn ghost danger" type="button">❌ Não veio → falta</button>
+      </div>
     </div>
-    <button id="btnRegistrarPresenca" class="btn" type="button">✅ Registrar ponto: marcar como veio</button>
-    <button id="btnFecharDia" class="btn ghost danger" type="button">❌ Não veio → falta</button>
-    <button id="btnSaida16" class="btn ghost" type="button" title="Marca saída às 16:00 nos selecionados">🚶 Saída 16:00</button>
-    <button id="btnSaida18" class="btn ghost" type="button" title="Marca saída às 18:00 nos selecionados">🚶 Saída 18:00</button>
-    <button id="btnMarcarFolga" class="btn ghost" type="button" title="Marca folga nos selecionados">🛋 Folga</button>
-    <button id="btnMarcarFeriado" class="btn ghost" type="button" title="Marca feriado nos selecionados">📅 Feriado</button>
-    <span class="pb-info" id="pbInfo">Selecione quem veio e clique em registrar.</span>
+
+    <div class="pb-linha">
+      <div class="pb-grupo">
+        <span class="pb-rot">Saída</span>
+        <button id="btnSaida16" class="btn ghost" type="button" title="Marca a saída às 16:00 nos selecionados">🚶 Saída 16:00</button>
+        <button id="btnSaida18" class="btn ghost" type="button" title="Marca a saída às 18:00 nos selecionados">🚶 Saída 18:00</button>
+        <button id="btnSaidaCustom" class="btn ghost" type="button" title="Usa a hora digitada no campo ao lado">🕐 Outra hora:</button>
+        <input id="horaSaidaCustom" type="time" value="17:00" aria-label="Outra hora de saída">
+      </div>
+      <div class="pb-grupo">
+        <span class="pb-rot">Ocorrência</span>
+        <button id="btnMarcarFolga" class="btn ghost" type="button" title="Marca folga nos selecionados">🛋 Folga</button>
+        <button id="btnMarcarFeriado" class="btn ghost" type="button" title="Marca feriado nos selecionados">📅 Feriado</button>
+      </div>
+      <span class="pb-info" id="pbInfo">Selecione quem veio e clique em registrar.</span>
+    </div>
   </div>
 
   <div class="tabela-wrap">
